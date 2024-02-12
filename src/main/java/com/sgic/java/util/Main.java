@@ -3,10 +3,17 @@ package com.sgic.java.util;
 import java.util.Scanner;
 import java.text.ParseException;
 import java.util.Date;
+import java.util.List;
 
 public class Main {
     public static void main(String[] args) throws ParseException {
         Scanner scanner = new Scanner(System.in);
+
+        System.out.println();
+
+        System.out.println("question A: ");
+
+        System.out.println();
 
         // Validate Email Address
         System.out.print("Enter an email address: ");
@@ -35,5 +42,26 @@ public class Main {
         System.out.println("Sum: " + sum);
 
         scanner.close();
+
+         // Add a gap before printing the output
+         System.out.println();
+
+        // Add a gap before printing the output
+        System.out.println();
+        System.out.println("question B: ");
+
+        System.out.println();
+
+         // Now let's call the EmployeeFilter methods
+        EmployeeFilter employeeFilter = new EmployeeFilter();
+        List<Employee> qualityEngineers = employeeFilter.filterQualityEngineers("src\\main\\java\\com\\sgic\\java\\util\\Employee.xml");
+        employeeFilter.insertEmployees(qualityEngineers);
+        // You can also print the filtered employees if needed
+        for (Employee employee : qualityEngineers) {
+            System.out.println(employee);
+            System.out.println();
+            System.out.println();
+
+        }
     }
 }

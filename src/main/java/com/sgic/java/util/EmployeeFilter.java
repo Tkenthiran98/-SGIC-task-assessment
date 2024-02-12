@@ -12,6 +12,7 @@ import java.util.List;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class EmployeeFilter {
@@ -20,17 +21,7 @@ public class EmployeeFilter {
     private static final String DB_USER = "root";
     private static final String DB_PASSWORD = "";
 
-    public static void main(String[] args) {
-        List<Employee> qualityEngineers = filterQualityEngineers("src\\main\\java\\com\\sgic\\java\\util\\Employee.xml");
-        // Store the filtered quality engineers in a database table
-        insertEmployees(qualityEngineers);
-        // You can also print the filtered employees if needed
-        for (Employee employee : qualityEngineers) {
-            System.out.println(employee);
-        }
-    }
-
-    public static List<Employee> filterQualityEngineers(String filename) {
+    public List<Employee> filterQualityEngineers(String filename) {
         List<Employee> qualityEngineers = new ArrayList<>();
         try {
             File file = new File(filename);
@@ -58,20 +49,55 @@ public class EmployeeFilter {
         return qualityEngineers;
     }
 
-    public static void insertEmployees(List<Employee> employees) {
+    public void insertEmployees(List<Employee> employees) {
         String query = "INSERT INTO employee (id, name, position, department) VALUES (?, ?, ?, ?)";
+        boolean anyInsertion = false; // Flag to track if any insertions were made
+        boolean alreadyAddedMessagePrinted = false; // Flag to track if the "Already added this details." message was printed
         try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
              PreparedStatement pstmt = conn.prepareStatement(query)) {
             for (Employee employee : employees) {
+                // Check if the employee already exists in the database
+                if (isEmployeeExists(conn, employee.getId())) {
+                    if (!alreadyAddedMessagePrinted) {
+                        System.out.println("Already added this details.");
+                        alreadyAddedMessagePrinted = true;
+                    }
+                    continue; // Skip inserting this employee and proceed to the next one
+                }
+                // Insert the employee into the database
                 pstmt.setInt(1, employee.getId());
                 pstmt.setString(2, employee.getName());
                 pstmt.setString(3, employee.getPosition());
                 pstmt.setString(4, employee.getDepartment());
                 pstmt.executeUpdate();
+                anyInsertion = true; // Set the flag to true since at least one employee was inserted
             }
-            System.out.println("Insertion successful.");
+            if (anyInsertion) {
+                // If at least one new employee was inserted, print "Insertion successful"
+                System.out.println("Insertion successful.");
+            }
         } catch (SQLException e) {
             e.printStackTrace();
+        }
+    }
+    
+    
+    // Method to print employees
+    public void printEmployees(List<Employee> employees) {
+        for (Employee employee : employees) {
+            System.out.println(employee);
+        }
+    }
+    
+       
+    
+    private boolean isEmployeeExists(Connection conn, int id) throws SQLException {
+        String query = "SELECT id FROM employee WHERE id = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, id);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next(); // Return true if the employee exists, false otherwise
+            }
         }
     }
 }
@@ -107,11 +133,9 @@ class Employee {
 
     @Override
     public String toString() {
-        return "Employee{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
+        return "Employee" +
+                "name='" + name + '\'' +
                 ", position='" + position + '\'' +
-                ", department='" + department + '\'' +
-                '}';
+                ", department='" + department;
     }
 }
